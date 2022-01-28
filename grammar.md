@@ -1,6 +1,6 @@
 # GEMA grammar
 
-This file describes the structure of a RON file in [EBNF notation][ebnf].
+This file describes the structure of a GEM file in [EBNF notation][ebnf].
 
 [ebnf]: https://en.wikipedia.org/wiki/Extended_Backus–Naur_form
 
@@ -109,3 +109,6 @@ enum_variant_unit = ident;
 enum_variant_tuple = ident, ws, tuple;
 enum_variant_named = ident, ws, "(", [named_field, { comma, named_field }, [comma]], ")";
 ```
+
+
+** this file was inspired by [RONs](https://github.com/ron-rs/ron/blob/HEAD/docs/grammar.md)
