@@ -1,0 +1,11 @@
+[package]
+name = "gema"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "gema"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[dependencies]
