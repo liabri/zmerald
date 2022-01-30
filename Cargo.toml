@@ -1,11 +1,13 @@
 [package]
-name = "gema"
+name = "zmerald"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "gema"
+name = "zmerald"
 path = "src/lib.rs"
 crate-type = ["rlib"]
 
 [dependencies]
+serde = { version = "1.0.60", features = ["serde_derive"] }
+base64 = "0.13"
