@@ -80,7 +80,7 @@ list = "[", [value, { comma, value }, [comma]], "]";
 ## Map
 
 ```ebnf
-map = "{", [map_entry, { comma, map_entry }, [comma]], "}";
+map = [id], "{", [map_entry, { comma, map_entry }, [comma]], "}";
 map_entry = value, ws, ":", ws, value;
 ```
 
