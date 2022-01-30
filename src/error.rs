@@ -28,7 +28,7 @@ pub enum ErrorCode {
     ExpectedOption,
     ExpectedOptionEnd,
     ExpectedMap,
-    ExpectedMapColon,
+    ExpectedMapSeparator,
     ExpectedMapEnd,
     ExpectedStructName {
         expected: &'static str,
@@ -36,6 +36,7 @@ pub enum ErrorCode {
     },
     ExpectedStruct,
     ExpectedNamedStruct(&'static str),
+    ExpectedTupleStruct,
     ExpectedStructEnd,
     ExpectedUnit,
     ExpectedString,
@@ -87,7 +88,7 @@ impl fmt::Display for ErrorCode {
             ErrorCode::ExpectedOption => f.write_str("Expected option"),
             ErrorCode::ExpectedOptionEnd => f.write_str("Expected closing `)`"),
             ErrorCode::ExpectedMap => f.write_str("Expected opening `{`"),
-            ErrorCode::ExpectedMapColon => f.write_str("Expected colon"),
+            ErrorCode::ExpectedMapSeparator => f.write_str("Expected map separator, either colon `:` or angle bracket `>`"),
             ErrorCode::ExpectedMapEnd => f.write_str("Expected closing `}`"),
             ErrorCode::ExpectedStructName {
                 expected,
@@ -97,6 +98,7 @@ impl fmt::Display for ErrorCode {
             ErrorCode::ExpectedNamedStruct(name) => {
                 write!(f, "Expected opening `(` for struct '{}'", name)
             }
+            ErrorCode::ExpectedTupleStruct => f.write_str("Expected tuple struct"),
             ErrorCode::ExpectedStructEnd => f.write_str("Expected closing `)`"),
             ErrorCode::ExpectedUnit => f.write_str("Expected unit"),
             ErrorCode::ExpectedString => f.write_str("Expected string"),

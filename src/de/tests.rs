@@ -79,6 +79,26 @@ fn test_struct() {
     assert_eq!(Ok(my_struct2), from_str("MyStruct2{x:{4:7},y:7}"));
 }
 
+
+// #[derive(Debug, PartialEq, Deserialize)]
+// struct Erbgha {
+//     levels: HashMap<u16, String>
+// }
+
+// #[test]
+// fn numru_erbgha() {
+//     let mut erbgha = Erbgha { levels: HashMap::new() };
+//     erbgha.levels.insert(50, "poop".to_string());
+
+
+//     assert_eq!(Ok(erbgha), from_str("Erbgha {
+//         levels: {50:\"poop\"}
+//     }"));
+// }
+
+
+
+
 #[test]
 fn test_option() {
     assert_eq!(Ok(Some(1u8)), from_str("1"));
@@ -112,40 +132,27 @@ fn test_map() {
     map.insert((true, false), 4);
     map.insert((false, false), 123);
 
-    assert_eq!(
-        Ok(map),
-        from_str(
-            "{
-        (true,false,):4,
-        (false,false,):123,
-    }"
-        )
+    assert_eq!(Ok(&map),
+        from_str("{
+            (true,false,):4,
+            (false,false,):123,
+        }").as_ref()
+    );
+
+
+    // using cavetta construct
+    assert_eq!(Ok(map),
+        from_str("{ 
+            <(true,false)> 4,
+            <(false, false)> 123
+        }")
     );
 }
 
-// #[test]
-// fn test_map_with_key() {
-//     use std::collections::HashMap;
-
-//     let mut map = HashMap::new();
-//     map.insert((true, false), 4);
-//     map.insert((false, false), 123);
-
-//     assert_eq!(
-//         Ok(map),
-//         from_str(
-//             "{ 
-//                 <true,false> { 4 },
-//                 <false, false> { 123 }
-//             }"
-//         )
-//     );
-// }
-
 #[test]
 fn test_string() {
-    let s: String = from_str("\"String\"").unwrap();
-    assert_eq!("String", s);
+    let s: String = from_str("\"わ\"").unwrap();
+    assert_eq!("わ", s);
 
     let raw: String = from_str("r\"String\"").unwrap();
     assert_eq!("String", raw);
@@ -184,7 +191,8 @@ fn test_comment() {
 x: 1.0, # x is just 1
 # There is another comment in the very next line..
 # And y is indeed
-y: 2.0 # 2!}"
+y: 2.0 # 2!
+}"
         )
         .unwrap()
     );

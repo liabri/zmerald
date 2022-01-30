@@ -84,12 +84,6 @@ map = [id], "{", [map_entry, { comma, map_entry }, [comma]], "}";
 map_entry = value, ws, ":", ws, value;
 ```
 
-## Tuple
-
-```ebnf
-tuple = "(", [value, { comma, value }, [comma]], ")";
-```
-
 ## Struct
 
 ```ebnf
@@ -99,6 +93,12 @@ tuple_struct = [ident], ws, tuple;
 named_struct = [ident], ws | id, "{", [named_field, { comma, named_field }, [comma]] | list, "}";
 id = ws, "<", value, ">", ws; 
 named_field = ident, ws, "=", value;
+```
+
+## Tuple
+
+```ebnf
+tuple = "(", [value, { comma, value }, [comma]], ")";
 ```
 
 ## Enum
@@ -111,4 +111,4 @@ enum_variant_named = ident, ws, "(", [named_field, { comma, named_field }, [comm
 ```
 
 
-** this file was inspired by [RONs](https://github.com/ron-rs/ron/blob/HEAD/docs/grammar.md)
+** heavily inspired by [RONs](https://github.com/ron-rs/ron/blob/HEAD/docs/grammar.md) grammar

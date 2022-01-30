@@ -27,7 +27,6 @@ const _____: u8 = 0; // everything else
 
 // Table of encodings, for fast predicates. (Non-ASCII and special chars are
 // shown with '·' in the comment.)
-#[rustfmt::skip]
 const ENCODINGS: [u8; 256] = [
 /*                     0      1      2      3      4      5      6      7      8      9    */
 /*   0+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, WS___,
@@ -170,12 +169,7 @@ impl<'a> Bytes<'a> {
             return self.err(ErrorCode::UnderscoreAtBeginning);
         }
 
-        fn calc_num<T: Num>(
-            bytes: &Bytes,
-            s: &str,
-            base: u8,
-            mut f: impl FnMut(&mut T, u8) -> bool,
-        ) -> Result<T> {
+        fn calc_num<T: Num>(bytes: &Bytes, s: &str, base: u8, mut f: impl FnMut(&mut T, u8) -> bool) -> Result<T> {
             let mut num_acc = T::from_u8(0);
 
             for &byte in s.as_bytes() {
@@ -469,10 +463,7 @@ impl<'a> Bytes<'a> {
             .and_then(|b| if b == byte { Ok(()) } else { self.err(error) })
     }
 
-    pub fn float<T>(&mut self) -> Result<T>
-    where
-        T: FromStr,
-    {
+    pub fn float<T>(&mut self) -> Result<T> where T: FromStr {
         for literal in &["inf", "-inf", "NaN"] {
             if self.consume_ident(literal) {
                 return FromStr::from_str(literal).map_err(|_| unreachable!()); // must not fail
@@ -578,10 +569,7 @@ impl<'a> Bytes<'a> {
             .ok_or_else(|| self.error(ErrorCode::Eof))
     }
 
-    pub fn signed_integer<T>(&mut self) -> Result<T>
-    where
-        T: Num,
-    {
+    pub fn signed_integer<T>(&mut self) -> Result<T> where T: Num {
         match self.peek_or_eof()? {
             b'+' => {
                 let _ = self.advance_single();
@@ -783,11 +771,8 @@ impl<'a> Bytes<'a> {
 
 pub trait Num {
     fn from_u8(x: u8) -> Self;
-
     fn checked_mul_ext(&mut self, x: u8) -> bool;
-
     fn checked_add_ext(&mut self, x: u8) -> bool;
-
     fn checked_sub_ext(&mut self, x: u8) -> bool;
 }
 

@@ -11,24 +11,21 @@ mod tests;
 
 pub use crate::error::{ Error, ErrorCode, Position, Result };
 use serde::de::{ self, DeserializeSeed, Deserializer as SerdeError, Visitor };
-use std::{borrow::Cow, io, str};
 use crate::parse::{ AnyNum, Bytes, ParsedStr };
+use std::{borrow::Cow, io, str};
 
-pub fn from_reader<R, T>(mut rdr: R) -> Result<T>
-where R: io::Read, T: de::DeserializeOwned {
+pub fn from_reader<R, T>(mut rdr: R) -> Result<T> where R: io::Read, T: de::DeserializeOwned {
     let mut bytes = Vec::new();
     rdr.read_to_end(&mut bytes)?;
 
     from_bytes(&bytes)
 }
 
-pub fn from_str<'a, T>(s: &'a str) -> Result<T>
-where T: de::Deserialize<'a> {
+pub fn from_str<'a, T>(s: &'a str) -> Result<T> where T: de::Deserialize<'a> {
     from_bytes(s.as_bytes())
 }
 
-pub fn from_bytes<'a, T>(s: &'a [u8]) -> Result<T>
-where T: de::Deserialize<'a> {
+pub fn from_bytes<'a, T>(s: &'a [u8]) -> Result<T> where T: de::Deserialize<'a> {
     from_bytes_seed(s, std::marker::PhantomData)
 }
 
@@ -87,20 +84,17 @@ impl<'de> Deserializer<'de> {
         }
     }
 
-    fn handle_any_struct<V>(&mut self, visitor: V) -> Result<V::Value>
+    fn handle_other_structs<V>(&mut self, visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
-        // Create a working copy
         let mut bytes = self.bytes;
 
         if bytes.consume("(") {
             bytes.skip_ws()?;
 
             if bytes.check_tuple_struct()? {
-                // first argument is technically incorrect, but ignored anyway
                 self.deserialize_tuple(0, visitor)
             } else {
-                // first two arguments are technically incorrect, but ignored anyway
-                self.deserialize_struct("", &[], visitor)
+               self.bytes.err(ErrorCode::ExpectedTupleStruct) 
             }
         } else {
             visitor.visit_unit()
@@ -113,9 +107,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
-        // Newtype variants can only be unwrapped if we receive information
-        //  about the wrapped type - with `deserialize_any` we don't
-
         if self.bytes.consume_ident("true") {
             return visitor.visit_bool(true);
         } else if self.bytes.consume_ident("false") {
@@ -137,25 +128,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 
         if ident.is_some() {
             self.bytes.skip_ws()?;
-            return self.handle_any_struct(visitor);
+            return self.handle_other_structs(visitor);
         }
 
         match self.bytes.peek_or_eof()? {
-            b'(' => self.handle_any_struct(visitor),
-            b'[' => self.deserialize_seq(visitor),
-            b'{' => {
-                self.deserialize_map(visitor)
-                // let map_or_struct = self.bytes.map_or_struct()?;
-
-                // match map_or_struct {
-                //     MapOrStruct::Map => self.deserialize_map(visitor),
-                //     MapOrStruct::Struct => self.deserialize_struct(visitor),
-                // }
-
-                // Since i will have shared behaviour (the use of <key/id>) I should make the above 
-                // self.handle_map_or_struct(visitor),
-            },
-
             b'0'..=b'9' | b'+' | b'-' => {
                 match self.bytes.any_num()? {
                     AnyNum::F32(x) => visitor.visit_f32(x),
@@ -171,6 +147,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 }
             },
 
+            b'(' => self.handle_other_structs(visitor),
+            b'[' => self.deserialize_seq(visitor),
+            b'{' | b'<' => self.deserialize_map(visitor),
             b'.' => self.deserialize_f64(visitor),
             b'"' | b'r' => self.deserialize_string(visitor),
             b'\'' => self.deserialize_char(visitor),
@@ -363,20 +342,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 
     fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
-        //key is defined within angle brackets
-        // if self.bytes.consume("<") {
-        //     let value = visitor.visit_map(Value::Until(b'>'), &mut self))?;
-        //     self.bytes.consume(">");
-
-        //     if self.bytes.consume("{") {
-
-        //     }
-             
-        //     if self.bytes.consume("}") {
-        //         Ok(value)
-        //     }
-        // }
-
         if self.bytes.consume("{") {
             let value = visitor.visit_map(CommaSeparated::new(b'}', &mut self))?;
             self.bytes.comma()?;
@@ -431,6 +396,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     }
 }
 
+
 struct CommaSeparated<'a, 'de: 'a> {
     de: &'a mut Deserializer<'de>,
     terminator: u8,
@@ -474,7 +440,6 @@ impl<'de, 'a> de::SeqAccess<'de> for CommaSeparated<'a, 'de> {
     where T: DeserializeSeed<'de> {
         if self.has_element()? {
             let res = seed.deserialize(&mut *self.de)?;
-
             self.had_comma = self.de.bytes.comma()?;
 
             Ok(Some(res))
@@ -490,9 +455,10 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
     where K: DeserializeSeed<'de> {
         if self.has_element()? {
-            if self.terminator == b')' {
-                seed.deserialize(&mut IdDeserializer::new(&mut *self.de))
-                    .map(Some)
+            if self.de.bytes.consume("<") {
+                seed.deserialize(&mut *self.de).map(Some)
+            } else if self.terminator == b')' {
+                seed.deserialize(&mut IdDeserializer::new(&mut *self.de)).map(Some)
             } else {
                 seed.deserialize(&mut *self.de).map(Some)
             }
@@ -505,16 +471,14 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
     where V: DeserializeSeed<'de> {
         self.de.bytes.skip_ws()?;
 
-        if self.de.bytes.consume(":") {
+        if self.de.bytes.consume(":") || self.de.bytes.consume(">") {
             self.de.bytes.skip_ws()?;
-
             let res = seed.deserialize(&mut TagDeserializer::new(&mut *self.de))?;
-
             self.had_comma = self.de.bytes.comma()?;
 
             Ok(res)
         } else {
-            self.err(ErrorCode::ExpectedMapColon)
+            self.err(ErrorCode::ExpectedMapSeparator)
         }
     }
 }
@@ -556,11 +520,7 @@ impl<'de, 'a> de::VariantAccess<'de> for Enum<'a, 'de> {
 
         if self.de.bytes.consume("(") {
             self.de.bytes.skip_ws()?;
-
             let val = seed.deserialize(&mut *self.de)?;
-
-            // self.de.newtype_variant = true;
-
             self.de.bytes.comma()?;
 
             if self.de.bytes.consume(")") {

@@ -34,7 +34,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
     type Value = Value;
 
     fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "a RON value")
+        write!(f, "a zmerald value")
     }
 
     fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
@@ -104,8 +104,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
         deserializer.deserialize_any(ValueVisitor)
     }
 
-    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-    where A: SeqAccess<'de> {
+    fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error> where A: SeqAccess<'de> {
         let mut vec = Vec::new();
         if let Some(cap) = seq.size_hint() {
             vec.reserve_exact(cap);
@@ -118,8 +117,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
         Ok(Value::Seq(vec))
     }
 
-    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-    where A: MapAccess<'de> {
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error> where A: MapAccess<'de> {
         let mut res: Map = Map::new();
 
         while let Some(entry) = map.next_entry()? {
