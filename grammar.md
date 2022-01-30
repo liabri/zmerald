@@ -1,4 +1,4 @@
-# GEMA grammar
+# Zmerald Grammar
 
 This file describes the structure of a GEM file in [EBNF notation][ebnf].
 
