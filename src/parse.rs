@@ -423,19 +423,19 @@ impl<'a> Bytes<'a> {
         }
     }
 
-    fn consume_all(&mut self, all: &[&str]) -> Result<bool> {
-        all.iter()
-            .map(|elem| {
-                if self.consume(elem) {
-                    self.skip_ws()?;
+    // fn consume_all(&mut self, all: &[&str]) -> Result<bool> {
+    //     all.iter()
+    //         .map(|elem| {
+    //             if self.consume(elem) {
+    //                 self.skip_ws()?;
 
-                    Ok(true)
-                } else {
-                    Ok(false)
-                }
-            })
-            .fold(Ok(true), |acc, x| acc.and_then(|val| x.map(|x| x && val)))
-    }
+    //                 Ok(true)
+    //             } else {
+    //                 Ok(false)
+    //             }
+    //         })
+    //         .fold(Ok(true), |acc, x| acc.and_then(|val| x.map(|x| x && val)))
+    // }
 
     pub fn eat_byte(&mut self) -> Result<u8> {
         let peek = self.peek_or_eof()?;

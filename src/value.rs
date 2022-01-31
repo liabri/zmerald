@@ -11,7 +11,7 @@ use std::{
     ops::{ Index, IndexMut },
 };
 
-use crate::de::{Error as RonError, Result};
+use crate::de::{Error as ZmeraldError, Result};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -240,7 +240,7 @@ impl Value {
 }
 
 impl<'de> Deserializer<'de> for Value {
-    type Error = RonError;
+    type Error = ZmeraldError;
 
     forward_to_deserialize_any! {
         bool f32 f64 char str string bytes
@@ -289,7 +289,7 @@ impl<'de> Deserializer<'de> for Value {
     where V: Visitor<'de> {
         match self {
             Value::Number(Number::Integer(i)) => visitor.visit_i64(i),
-            v => Err(RonError::custom(format!("Expected a number, got {:?}", v))),
+            v => Err(ZmeraldError::custom(format!("Expected a number, got {:?}", v))),
         }
     }
 
@@ -312,7 +312,7 @@ impl<'de> Deserializer<'de> for Value {
     where V: Visitor<'de> {
         match self {
             Value::Number(Number::Integer(i)) => visitor.visit_u64(i as u64),
-            v => Err(RonError::custom(format!("Expected a number, got {:?}", v))),
+            v => Err(ZmeraldError::custom(format!("Expected a number, got {:?}", v))),
         }
     }
 }
@@ -323,7 +323,7 @@ struct MapAccessor {
 }
 
 impl<'de> MapAccess<'de> for MapAccessor {
-    type Error = RonError;
+    type Error = ZmeraldError;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
     where K: DeserializeSeed<'de> {
@@ -348,7 +348,7 @@ struct Seq {
 }
 
 impl<'de> SeqAccess<'de> for Seq {
-    type Error = RonError;
+    type Error = ZmeraldError;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where T: DeserializeSeed<'de> {

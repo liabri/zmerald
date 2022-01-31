@@ -173,7 +173,7 @@ fn test_map() {
         }")
     );
 
-    //nested map with cavetta construct (aka maps within structs)
+    //nested map with cavetta construct (mostly maps within structs)
     // Key1 value1[<Key2> <Value2>]
     let mut map_holder = HashMap::new();
     let mut map2 = HashMap::new();

@@ -354,15 +354,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         } 
 
         // if nested map (not sure how to check) {
-        let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
-        self.bytes.consume(";");
-        return Ok(value);
+            let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
+            self.bytes.consume(";");
+            return Ok(value);
         //}
 
         // return self.bytes.err(ErrorCode::ExpectedMap);
     }
 
-    fn deserialize_struct<V>(mut self, name: &'static str, fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+    fn deserialize_struct<V>(mut self, name: &'static str, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
         self.bytes.consume_struct_name(name)?;
         self.bytes.skip_ws()?;
