@@ -359,8 +359,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
             self.bytes.consume(";");
             return Ok(value);
-        } else {
-
         }
 
         return self.bytes.err(ErrorCode::ExpectedMap);

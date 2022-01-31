@@ -254,44 +254,44 @@ fn err<T>(kind: ErrorCode, line: usize, col: usize) -> Result<T> {
     })
 }
 
-// #[test]
-// fn test_err_wrong_value() {
-//     use self::ErrorCode::*;
-//     use std::collections::HashMap;
+#[test]
+fn test_err_wrong_value() {
+    use self::ErrorCode::*;
+    use std::collections::HashMap;
 
-//     assert_eq!(from_str::<f32>("'c'"), err(ExpectedFloat, 1, 1));
-//     assert_eq!(from_str::<String>("'c'"), err(ExpectedString, 1, 1));
-//     assert_eq!(from_str::<HashMap<u32, u32>>("'c'"), err(ExpectedMap, 1, 1));
-//     assert_eq!(from_str::<[u8; 5]>("'c'"), err(ExpectedArray, 1, 1));
-//     assert_eq!(from_str::<Vec<u32>>("'c'"), err(ExpectedArray, 1, 1));
-//     assert_eq!(from_str::<MyEnum>("'c'"), err(ExpectedIdentifier, 1, 1));
-//     assert_eq!(
-//         from_str::<MyStruct>("'c'"),
-//         err(ExpectedNamedStruct("MyStruct"), 1, 1)
-//     );
-//     assert_eq!(
-//         from_str::<MyStruct>("NotMyStruct(x: 4, y: 2)"),
-//         err(
-//             ExpectedStructName {
-//                 expected: "MyStruct",
-//                 found: String::from("NotMyStruct")
-//             },
-//             1,
-//             1
-//         )
-//     );
-//     assert_eq!(from_str::<(u8, bool)>("'c'"), err(ExpectedArray, 1, 1));
-//     assert_eq!(from_str::<bool>("notabool"), err(ExpectedBoolean, 1, 1));
+    assert_eq!(from_str::<f32>("'c'"), err(ExpectedFloat, 1, 1));
+    assert_eq!(from_str::<String>("'c'"), err(ExpectedString, 1, 1));
+    assert_eq!(from_str::<HashMap<u32, u32>>("'c'"), err(ExpectedMap, 1, 1));
+    assert_eq!(from_str::<[u8; 5]>("'c'"), err(ExpectedArray, 1, 1));
+    assert_eq!(from_str::<Vec<u32>>("'c'"), err(ExpectedArray, 1, 1));
+    assert_eq!(from_str::<MyEnum>("'c'"), err(ExpectedIdentifier, 1, 1));
+    assert_eq!(
+        from_str::<MyStruct>("'c'"),
+        err(ExpectedNamedStruct("MyStruct"), 1, 1)
+    );
+    assert_eq!(
+        from_str::<MyStruct>("NotMyStruct(x: 4, y: 2)"),
+        err(
+            ExpectedStructName {
+                expected: "MyStruct",
+                found: String::from("NotMyStruct")
+            },
+            1,
+            1
+        )
+    );
+    assert_eq!(from_str::<(u8, bool)>("'c'"), err(ExpectedArray, 1, 1));
+    assert_eq!(from_str::<bool>("notabool"), err(ExpectedBoolean, 1, 1));
 
-//     assert_eq!(
-//         from_str::<MyStruct>("MyStruct{\n    x: true}"),
-//         err(ExpectedFloat, 2, 8)
-//     );
-//     assert_eq!(
-//         from_str::<MyStruct>("MyStruct{\n    x: 3.5, \n    y:}"),
-//         err(ExpectedFloat, 3, 7)
-//     );
-// }
+    assert_eq!(
+        from_str::<MyStruct>("MyStruct{\n    x: true}"),
+        err(ExpectedFloat, 2, 8)
+    );
+    assert_eq!(
+        from_str::<MyStruct>("MyStruct{\n    x: 3.5, \n    y:}"),
+        err(ExpectedFloat, 3, 7)
+    );
+}
 
 #[test]
 fn test_perm_ws() {
