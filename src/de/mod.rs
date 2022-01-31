@@ -77,11 +77,12 @@ impl<'de> Deserializer<'de> {
     pub fn end(&mut self) -> Result<()> {
         self.bytes.skip_ws()?;
 
-        if self.bytes.bytes().is_empty() {
-            Ok(())
-        } else {
-            self.bytes.err(ErrorCode::TrailingCharacters)
-        }
+        // if self.bytes.bytes().is_empty() {
+        //     Ok(())
+        // } else {
+        //     self.bytes.err(ErrorCode::TrailingCharacters)
+        // }
+        Ok(())
     }
 
     fn handle_other_structs<V>(&mut self, visitor: V) -> Result<V::Value>
@@ -347,16 +348,25 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             self.bytes.comma()?;
 
             if self.bytes.consume("}") {
-                Ok(value)
+                return Ok(value);
             } else {
-                self.bytes.err(ErrorCode::ExpectedMapEnd)
+                return self.bytes.err(ErrorCode::ExpectedMapEnd);
             }
+        } 
+
+        // checked for nested maps which I allow not to have any {}
+        if let Ok(()) = self.bytes.skip_ws() {
+            let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
+            self.bytes.consume(";");
+            return Ok(value);
         } else {
-            self.bytes.err(ErrorCode::ExpectedMap)
+
         }
+
+        return self.bytes.err(ErrorCode::ExpectedMap);
     }
 
-    fn deserialize_struct<V>(mut self, name: &'static str, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+    fn deserialize_struct<V>(mut self, name: &'static str, fields: &'static [&'static str], visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
         self.bytes.consume_struct_name(name)?;
         self.bytes.skip_ws()?;
@@ -419,16 +429,18 @@ impl<'a, 'de> CommaSeparated<'a, 'de> {
     fn has_element(&mut self) -> Result<bool> {
         self.de.bytes.skip_ws()?;
 
-        match (
-            self.had_comma,
-            self.de.bytes.peek_or_eof()? != self.terminator,
-        ) {
+        // nested cavetta construct
+        // if self.terminator == b';' {
+        //     return Ok(false);
+        // }
+
+        match (self.had_comma, self.de.bytes.peek_or_eof()? != self.terminator) {
             // Trailing comma, maybe has a next element
             (true, has_element) => Ok(has_element),
             // No trailing comma but terminator
             (false, false) => Ok(false),
             // No trailing comma or terminator
-            (false, true) => self.err(ErrorCode::ExpectedComma),
+            (false, true) => self.err(ErrorCode::ExpectedComma), 
         }
     }
 }
@@ -455,13 +467,15 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
     where K: DeserializeSeed<'de> {
         if self.has_element()? {
+
+            // < = cavetta construction
             if self.de.bytes.consume("<") {
-                seed.deserialize(&mut *self.de).map(Some)
+                return seed.deserialize(&mut *self.de).map(Some);
             } else if self.terminator == b')' {
-                seed.deserialize(&mut IdDeserializer::new(&mut *self.de)).map(Some)
-            } else {
-                seed.deserialize(&mut *self.de).map(Some)
-            }
+                return seed.deserialize(&mut IdDeserializer::new(&mut *self.de)).map(Some);
+            } 
+
+            seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
         }
@@ -471,13 +485,21 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
     where V: DeserializeSeed<'de> {
         self.de.bytes.skip_ws()?;
 
+        // > = cavetta construction
         if self.de.bytes.consume(":") || self.de.bytes.consume(">") {
             self.de.bytes.skip_ws()?;
             let res = seed.deserialize(&mut TagDeserializer::new(&mut *self.de))?;
             self.had_comma = self.de.bytes.comma()?;
 
-            Ok(res)
+            return Ok(res);
         } else {
+
+            //check for whitespace aka nested cavetta construction
+            if let Ok(()) = self.de.bytes.skip_ws() {
+                let res = seed.deserialize(&mut TagDeserializer::new(&mut *self.de))?;
+                return Ok(res);    
+            }
+
             self.err(ErrorCode::ExpectedMapSeparator)
         }
     }
