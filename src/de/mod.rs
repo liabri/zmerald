@@ -258,11 +258,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         if self.bytes.consume("None") {
             return visitor.visit_none();
         } else {
-            return visitor.visit_some(&mut *self); // Implicit_Some
+            return visitor.visit_some(&mut *self);
         }
     }
 
-    // In Serde, unit means an anonymous value containing no data.
     fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
         if self.bytes.consume("{}") {
@@ -355,13 +354,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         } 
 
         // checked for nested maps which I allow not to have any {}
-        if let Ok(()) = self.bytes.skip_ws() {
-            let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
-            self.bytes.consume(";");
-            return Ok(value);
-        }
+        let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
+        self.bytes.consume(";");
+        return Ok(value);
 
-        return self.bytes.err(ErrorCode::ExpectedMap);
+        // return self.bytes.err(ErrorCode::ExpectedMap);
     }
 
     fn deserialize_struct<V>(mut self, name: &'static str, fields: &'static [&'static str], visitor: V) -> Result<V::Value>

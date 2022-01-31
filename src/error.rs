@@ -87,9 +87,10 @@ impl fmt::Display for ErrorCode {
             ErrorCode::ExpectedInteger => f.write_str("Expected integer"),
             ErrorCode::ExpectedOption => f.write_str("Expected option"),
             ErrorCode::ExpectedOptionEnd => f.write_str("Expected closing `)`"),
-            ErrorCode::ExpectedMap => f.write_str("Expected opening `{`"),
-            ErrorCode::ExpectedMapSeparator => f.write_str("Expected map separator, either colon `:` or angle bracket `>`"),
-            ErrorCode::ExpectedMapEnd => f.write_str("Expected closing `}`"),
+            //todo try to separate between the below by construct, default, cavetta & nested cavetta
+            ErrorCode::ExpectedMap => f.write_str("Expected opening map opening, either `{` or angle bracket `<` for cavetta construct or any `value` for nested cavetta construct"),
+            ErrorCode::ExpectedMapSeparator => f.write_str("Expected map separator, either colon `:` or angle bracket `>` for cavetta construct"),
+            ErrorCode::ExpectedMapEnd => f.write_str("Expected map closing, either bracket `}` or semi-colon `;` for nested cavetta construct"),
             ErrorCode::ExpectedStructName {
                 expected,
                 ref found,
