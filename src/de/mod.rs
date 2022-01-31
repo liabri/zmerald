@@ -353,10 +353,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             }
         } 
 
-        // checked for nested maps which I allow not to have any {}
+        // if nested map (not sure how to check) {
         let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
         self.bytes.consume(";");
         return Ok(value);
+        //}
 
         // return self.bytes.err(ErrorCode::ExpectedMap);
     }
@@ -384,7 +385,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 
     fn deserialize_enum<V>(self,_name: &'static str, _variants: &'static [&'static str], visitor: V) -> Result<V::Value>
     where V: Visitor<'de> {
-        // self.newtype_variant = false;
         visitor.visit_enum(Enum::new(self))
     }
 
@@ -423,11 +423,6 @@ impl<'a, 'de> CommaSeparated<'a, 'de> {
 
     fn has_element(&mut self) -> Result<bool> {
         self.de.bytes.skip_ws()?;
-
-        // nested cavetta construct
-        // if self.terminator == b';' {
-        //     return Ok(false);
-        // }
 
         match (self.had_comma, self.de.bytes.peek_or_eof()? != self.terminator) {
             // Trailing comma, maybe has a next element
@@ -490,10 +485,10 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
         } else {
 
             //check for whitespace aka nested cavetta construction
-            if let Ok(()) = self.de.bytes.skip_ws() {
+            // if nested_map {
                 let res = seed.deserialize(&mut TagDeserializer::new(&mut *self.de))?;
-                return Ok(res);    
-            }
+                return Ok(res);  
+            // }  
 
             self.err(ErrorCode::ExpectedMapSeparator)
         }
