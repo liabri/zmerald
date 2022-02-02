@@ -27,6 +27,11 @@ struct MyStruct3 {
     x: HashMap<u16, u16>,
 }
 
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+struct MyStruct4 {
+    x: String,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 enum MyEnum {
     A,
@@ -81,6 +86,12 @@ fn test_struct() {
             # x <5> 5
         }")
     );
+
+
+    let my_struct4 = MyStruct4 { x: String::from("hello") };
+
+    assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:hello}"));
+    // assert_eq!(Ok(my_struct), from_str("{x:4,y:7}"));
 
 
     #[derive(Debug, PartialEq, Deserialize)]
@@ -161,7 +172,7 @@ fn test_map() {
     map_holder.insert("first", map2);
     assert_eq!(Ok(map_holder),
         from_str("{
-            first <4> 5;
+            \"first\" <4> 5;
         }")
     );
 

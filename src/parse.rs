@@ -14,7 +14,7 @@ const IDENT_FIRST_CHAR: u8 = 1 << 2; // [A-Za-z_]
 const IDENT_OTHER_CHAR: u8 = 1 << 3; // [A-Za-z_0-9]
 const IDENT_RAW_CHAR: u8 = 1 << 4; // [A-Za-z_0-9\.+-]
 const WHITESPACE_CHAR: u8 = 1 << 5; // [\n\t\r ]
-const RESERVED_CHAR: u8 = 1 << 6; // [\n\t\r ]
+const RESERVED_CHAR: u8 = 1 << 6; // [{}<>[]()$:;',]
 
 // We encode each char as belonging to some number of these categories.
 const DIGIT: u8 = INT_CHAR | FLOAT_CHAR | IDENT_OTHER_CHAR | IDENT_RAW_CHAR; // [0-9]
@@ -23,11 +23,10 @@ const UNDER: u8 = INT_CHAR | IDENT_FIRST_CHAR | IDENT_OTHER_CHAR | IDENT_RAW_CHA
 const E____: u8 = INT_CHAR | FLOAT_CHAR | IDENT_FIRST_CHAR | IDENT_OTHER_CHAR | IDENT_RAW_CHAR; // [Ee]
 const G2Z__: u8 = IDENT_FIRST_CHAR | IDENT_OTHER_CHAR | IDENT_RAW_CHAR; // [G-Zg-z]
 const PUNCT: u8 = FLOAT_CHAR | IDENT_RAW_CHAR; // [\.+-]
-const WS___: u8 = WHITESPACE_CHAR; // [\t\n\r ]
+const WS___: u8 = WHITESPACE_CHAR; // [\n\t\r ]
+const RESER: u8 = RESERVED_CHAR; // [{}<>[]()$:;',]
 const _____: u8 = 0; // everything else
 
-// characters reserved for zmerald (which require to be escaped for use in a String)
-const RESER: u8 = RESERVED_CHAR;
 
 // Table of encodings, for fast predicates. (Non-ASCII and special chars are
 // shown with '·' in the comment.)
@@ -38,7 +37,7 @@ const ENCODINGS: [u8; 256] = [
 /*  20+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, _____,
 /*  30+: ·· !"#$%&' */ _____, _____, WS___, _____, _____, _____, RESER, _____, _____, RESER,
 /*  40+: ()*+,-./01 */ RESER, RESER, _____, PUNCT, RESER, PUNCT, PUNCT, _____, DIGIT, DIGIT,
-/*  50+: 23456789:; */ DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, _____, RESER,
+/*  50+: 23456789:; */ DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, RESER, RESER,
 /*  60+: <=>?@ABCDE */ RESER, _____, RESER, _____, _____, ABCDF, ABCDF, ABCDF, ABCDF, E____,
 /*  70+: FGHIJKLMNO */ ABCDF, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
 /*  80+: PQRSTUVWZY */ G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
@@ -88,7 +87,6 @@ const fn is_whitespace_char(c: u8) -> bool {
 const fn is_reserved_char(c: u8) -> bool {
     ENCODINGS[c as usize] & RESERVED_CHAR != 0
 }
-
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AnyNum {
@@ -612,11 +610,6 @@ impl<'a> Bytes<'a> {
 
     fn non_escaped_string(&mut self) -> Result<ParsedStr<'a>> {
         use std::iter::repeat;
-
-        // too find `end` of string we need to check for all other characters designated to the language
-        // such as brackets and such, if one wants to put those in the string they should use an 
-        // escape `\` or just put it into quotes
-
         let (i, end_or_escape) = self
             .bytes
             .iter()
