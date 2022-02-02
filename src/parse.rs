@@ -599,6 +599,7 @@ impl<'a> Bytes<'a> {
             let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b)).count();
             let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
             if !s.is_empty() {
+                self.consume(s);
                 return Ok(ParsedStr::Slice(s));
             }
         }
