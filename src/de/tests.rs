@@ -89,7 +89,7 @@ fn test_struct() {
 
 
     let my_struct4 = MyStruct4 { x: String::from("hello") };
-
+    //issue: for some reason the beginning of the string is not being accepted
     assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:hello}"));
     // assert_eq!(Ok(my_struct), from_str("{x:4,y:7}"));
 

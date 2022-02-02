@@ -608,60 +608,6 @@ impl<'a> Bytes<'a> {
         self.err(ErrorCode::ExpectedString)
     }
 
-    fn non_escaped_string(&mut self) -> Result<ParsedStr<'a>> {
-        use std::iter::repeat;
-        let (i, end_or_escape) = self
-            .bytes
-            .iter()
-            .enumerate()
-            .find(|&(_, &b)| b == b'\\')
-            .ok_or_else(|| self.error(ErrorCode::ExpectedStringEnd))?;
-
-        if *end_or_escape == b'"' {
-            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
-
-            // Advance by the number of bytes of the string
-            // + 1 for the `"`.
-            let _ = self.advance(i + 1);
-
-            Ok(ParsedStr::Slice(s))
-        } else {
-            let mut i = i;
-            let mut s: Vec<_> = self.bytes[..i].to_vec();
-
-            loop {
-                let _ = self.advance(i + 1);
-                let character = self.parse_escape()?;
-                match character.len_utf8() {
-                    1 => s.push(character as u8),
-                    len => {
-                        let start = s.len();
-                        s.extend(repeat(0).take(len));
-                        character.encode_utf8(&mut s[start..]);
-                    }
-                }
-
-                let (new_i, end_or_escape) = self
-                    .bytes
-                    .iter()
-                    .enumerate()
-                    .find(|&(_, &b)| b == b'\\' || b == b'"')
-                    .ok_or(ErrorCode::Eof)
-                    .map_err(|e| self.error(e))?;
-
-                i = new_i;
-                s.extend_from_slice(&self.bytes[..i]);
-
-                if *end_or_escape == b'"' {
-                    let _ = self.advance(i + 1);
-
-                    let s = String::from_utf8(s).map_err(|e| self.error(e.into()))?;
-                    break Ok(ParsedStr::Allocated(s));
-                }
-            }
-        }
-    }
-
     fn escaped_string(&mut self) -> Result<ParsedStr<'a>> {
         use std::iter::repeat;
 
