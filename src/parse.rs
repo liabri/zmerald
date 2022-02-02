@@ -595,8 +595,6 @@ impl<'a> Bytes<'a> {
     pub fn string(&mut self) -> Result<ParsedStr<'a>> {
         if self.consume("\"") {
             return self.escaped_string();
-        } else if self.consume("r") {
-            return self.raw_string();
         } else {
             let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b)).count();
             let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
@@ -663,30 +661,30 @@ impl<'a> Bytes<'a> {
         }
     }
 
-    fn raw_string(&mut self) -> Result<ParsedStr<'a>> {
-        let num_hashes = self.bytes.iter().take_while(|&&b| b == b'#').count();
-        let hashes = &self.bytes[..num_hashes];
-        let _ = self.advance(num_hashes);
+    // fn raw_string(&mut self) -> Result<ParsedStr<'a>> {
+    //     let num_hashes = self.bytes.iter().take_while(|&&b| b == b'#').count();
+    //     let hashes = &self.bytes[..num_hashes];
+    //     let _ = self.advance(num_hashes);
 
-        if !self.consume("\"") {
-            return self.err(ErrorCode::ExpectedString);
-        }
+    //     if !self.consume("\"") {
+    //         return self.err(ErrorCode::ExpectedString);
+    //     }
 
-        let ending = [&[b'"'], hashes].concat();
-        let i = self
-            .bytes
-            .windows(num_hashes + 1)
-            .position(|window| window == ending.as_slice())
-            .ok_or_else(|| self.error(ErrorCode::ExpectedStringEnd))?;
+    //     let ending = [&[b'"'], hashes].concat();
+    //     let i = self
+    //         .bytes
+    //         .windows(num_hashes + 1)
+    //         .position(|window| window == ending.as_slice())
+    //         .ok_or_else(|| self.error(ErrorCode::ExpectedStringEnd))?;
 
-        let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+    //     let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
 
-        // Advance by the number of bytes of the string
-        // + `num_hashes` + 1 for the `"`.
-        let _ = self.advance(i + num_hashes + 1);
+    //     // Advance by the number of bytes of the string
+    //     // + `num_hashes` + 1 for the `"`.
+    //     let _ = self.advance(i + num_hashes + 1);
 
-        Ok(ParsedStr::Slice(s))
-    }
+    //     Ok(ParsedStr::Slice(s))
+    // }
 
     fn test_for(&self, s: &str) -> bool {
         s.bytes()
