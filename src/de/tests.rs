@@ -29,7 +29,9 @@ struct MyStruct3 {
 
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 struct MyStruct4 {
-    x: String,
+    x: Option<String>,
+    y: String,
+    z: f32
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
@@ -88,9 +90,8 @@ fn test_struct() {
     );
 
 
-    let my_struct4 = MyStruct4 { x: String::from("hello") };
-    //issue: for some reason the beginning of the string is not being accepted
-    assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:hello}"));
+    let my_struct4 = MyStruct4 { x: Some(String::from("zme")), y: String::from("rald"), z: 1.0 };
+    assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:zme,y:rald,z:1.0}"));
 
 
     #[derive(Debug, PartialEq, Deserialize)]
