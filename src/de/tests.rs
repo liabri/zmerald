@@ -104,26 +104,6 @@ fn test_struct() {
     assert_eq!(Ok(my_struct2), from_str("MyStruct2{x:{4:7},y:7}"));
 }
 
-
-// #[derive(Debug, PartialEq, Deserialize)]
-// struct Erbgha {
-//     levels: HashMap<u16, String>
-// }
-
-// #[test]
-// fn numru_erbgha() {
-//     let mut erbgha = Erbgha { levels: HashMap::new() };
-//     erbgha.levels.insert(50, "poop".to_string());
-
-
-//     assert_eq!(Ok(erbgha), from_str("Erbgha {
-//         levels: {50:\"poop\"}
-//     }"));
-// }
-
-
-
-
 #[test]
 fn test_option() {
     assert_eq!(Ok(Some(1u8)), from_str("1"));
@@ -181,7 +161,7 @@ fn test_map() {
     map_holder.insert("first", map2);
     assert_eq!(Ok(map_holder),
         from_str("{
-            \"first\" <4> 5;
+            first <4> 5;
         }")
     );
 

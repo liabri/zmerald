@@ -1,7 +1,5 @@
-//! Value module.
-
 use serde::{
-    de::{DeserializeOwned, DeserializeSeed, Deserializer, Error as SerdeError, MapAccess, SeqAccess, Visitor},
+    de::{ DeserializeOwned, DeserializeSeed, Deserializer, Error as SerdeError, MapAccess, SeqAccess, Visitor },
     forward_to_deserialize_any, Deserialize, Serialize,
 };
 use std::{
@@ -11,7 +9,7 @@ use std::{
     ops::{ Index, IndexMut },
 };
 
-use crate::de::{Error as ZmeraldError, Result};
+use crate::de::{ Error as ZmeraldError, Result };
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(transparent)]
@@ -233,10 +231,30 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn into_rust<T>(self) -> Result<T>
-    where T: DeserializeOwned {
+    pub fn into_rust<T>(self) -> Result<T> where T: DeserializeOwned {
         T::deserialize(self)
     }
+
+    //if value is the same instance as its parent
+    // pub fn is_nested(&self) -> bool {
+    //     if let Value::Map(x) = self {
+    //         let y: &std::collections::BTreeMap<Value, Value> = &x.0;
+
+    //         if let Some((key, value)) = y.iter().next() {
+    //             match key {
+    //                 Value::Map(_) => return true,
+    //                 _ => {},
+    //             }
+
+    //             match value {
+    //                 Value::Map(_) => return true,
+    //                 _ => {},       
+    //             }
+    //         }
+    //     }
+
+    //     false
+    // }
 }
 
 impl<'de> Deserializer<'de> for Value {

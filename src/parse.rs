@@ -14,6 +14,7 @@ const IDENT_FIRST_CHAR: u8 = 1 << 2; // [A-Za-z_]
 const IDENT_OTHER_CHAR: u8 = 1 << 3; // [A-Za-z_0-9]
 const IDENT_RAW_CHAR: u8 = 1 << 4; // [A-Za-z_0-9\.+-]
 const WHITESPACE_CHAR: u8 = 1 << 5; // [\n\t\r ]
+const RESERVED_CHAR: u8 = 1 << 6; // [\n\t\r ]
 
 // We encode each char as belonging to some number of these categories.
 const DIGIT: u8 = INT_CHAR | FLOAT_CHAR | IDENT_OTHER_CHAR | IDENT_RAW_CHAR; // [0-9]
@@ -25,6 +26,9 @@ const PUNCT: u8 = FLOAT_CHAR | IDENT_RAW_CHAR; // [\.+-]
 const WS___: u8 = WHITESPACE_CHAR; // [\t\n\r ]
 const _____: u8 = 0; // everything else
 
+// characters reserved for zmerald (which require to be escaped for use in a String)
+const RESER: u8 = RESERVED_CHAR;
+
 // Table of encodings, for fast predicates. (Non-ASCII and special chars are
 // shown with '·' in the comment.)
 const ENCODINGS: [u8; 256] = [
@@ -32,16 +36,16 @@ const ENCODINGS: [u8; 256] = [
 /*   0+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, WS___,
 /*  10+: ·········· */ WS___, _____, _____, WS___, _____, _____, _____, _____, _____, _____,
 /*  20+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, _____,
-/*  30+: ·· !"#$%&' */ _____, _____, WS___, _____, _____, _____, _____, _____, _____, _____,
-/*  40+: ()*+,-./01 */ _____, _____, _____, PUNCT, _____, PUNCT, PUNCT, _____, DIGIT, DIGIT,
-/*  50+: 23456789:; */ DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, _____, _____,
-/*  60+: <=>?@ABCDE */ _____, _____, _____, _____, _____, ABCDF, ABCDF, ABCDF, ABCDF, E____,
+/*  30+: ·· !"#$%&' */ _____, _____, WS___, _____, _____, _____, RESER, _____, _____, RESER,
+/*  40+: ()*+,-./01 */ RESER, RESER, _____, PUNCT, RESER, PUNCT, PUNCT, _____, DIGIT, DIGIT,
+/*  50+: 23456789:; */ DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, DIGIT, _____, RESER,
+/*  60+: <=>?@ABCDE */ RESER, _____, RESER, _____, _____, ABCDF, ABCDF, ABCDF, ABCDF, E____,
 /*  70+: FGHIJKLMNO */ ABCDF, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
 /*  80+: PQRSTUVWZY */ G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
-/*  90+: Z[\]^_`abc */ G2Z__, _____, _____, _____, _____, UNDER, _____, ABCDF, ABCDF, ABCDF,
+/*  90+: Z[\]^_`abc */ G2Z__, RESER, _____, RESER, _____, UNDER, _____, ABCDF, ABCDF, ABCDF,
 /* 100+: defghijklm */ ABCDF, E____, ABCDF, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
 /* 110+: nopqrstuvw */ G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__, G2Z__,
-/* 120+: xyz{|}~··· */ G2Z__, G2Z__, G2Z__, _____, _____, _____, _____, _____, _____, _____,
+/* 120+: xyz{|}~··· */ G2Z__, G2Z__, G2Z__, RESER, _____, RESER, _____, _____, _____, _____,
 /* 130+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, _____,
 /* 140+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, _____,
 /* 150+: ·········· */ _____, _____, _____, _____, _____, _____, _____, _____, _____, _____,
@@ -80,6 +84,11 @@ const fn is_ident_raw_char(c: u8) -> bool {
 const fn is_whitespace_char(c: u8) -> bool {
     ENCODINGS[c as usize] & WHITESPACE_CHAR != 0
 }
+
+const fn is_reserved_char(c: u8) -> bool {
+    ENCODINGS[c as usize] & RESERVED_CHAR != 0
+}
+
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AnyNum {
@@ -587,11 +596,76 @@ impl<'a> Bytes<'a> {
 
     pub fn string(&mut self) -> Result<ParsedStr<'a>> {
         if self.consume("\"") {
-            self.escaped_string()
+            return self.escaped_string();
         } else if self.consume("r") {
-            self.raw_string()
+            return self.raw_string();
         } else {
-            self.err(ErrorCode::ExpectedString)
+            let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b)).count();
+            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+            if !s.is_empty() {
+                return Ok(ParsedStr::Slice(s));
+            }
+        }
+
+        self.err(ErrorCode::ExpectedString)
+    }
+
+    fn non_escaped_string(&mut self) -> Result<ParsedStr<'a>> {
+        use std::iter::repeat;
+
+        // too find `end` of string we need to check for all other characters designated to the language
+        // such as brackets and such, if one wants to put those in the string they should use an 
+        // escape `\` or just put it into quotes
+
+        let (i, end_or_escape) = self
+            .bytes
+            .iter()
+            .enumerate()
+            .find(|&(_, &b)| b == b'\\')
+            .ok_or_else(|| self.error(ErrorCode::ExpectedStringEnd))?;
+
+        if *end_or_escape == b'"' {
+            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+
+            // Advance by the number of bytes of the string
+            // + 1 for the `"`.
+            let _ = self.advance(i + 1);
+
+            Ok(ParsedStr::Slice(s))
+        } else {
+            let mut i = i;
+            let mut s: Vec<_> = self.bytes[..i].to_vec();
+
+            loop {
+                let _ = self.advance(i + 1);
+                let character = self.parse_escape()?;
+                match character.len_utf8() {
+                    1 => s.push(character as u8),
+                    len => {
+                        let start = s.len();
+                        s.extend(repeat(0).take(len));
+                        character.encode_utf8(&mut s[start..]);
+                    }
+                }
+
+                let (new_i, end_or_escape) = self
+                    .bytes
+                    .iter()
+                    .enumerate()
+                    .find(|&(_, &b)| b == b'\\' || b == b'"')
+                    .ok_or(ErrorCode::Eof)
+                    .map_err(|e| self.error(e))?;
+
+                i = new_i;
+                s.extend_from_slice(&self.bytes[..i]);
+
+                if *end_or_escape == b'"' {
+                    let _ = self.advance(i + 1);
+
+                    let s = String::from_utf8(s).map_err(|e| self.error(e.into()))?;
+                    break Ok(ParsedStr::Allocated(s));
+                }
+            }
         }
     }
 

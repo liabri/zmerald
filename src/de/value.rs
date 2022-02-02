@@ -77,8 +77,7 @@ impl<'de> Visitor<'de> for ValueVisitor {
         self.visit_byte_buf(v.to_vec())
     }
 
-    fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
-    where E: Error {
+    fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E> where E: Error {
         self.visit_string(String::from_utf8(v).map_err(|e| Error::custom(format!("{}", e)))?)
     }
 

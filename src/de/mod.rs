@@ -353,13 +353,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             }
         } 
 
-        // if nested map (not sure how to check) {
+        // if V::Value::Unit.is_nested() {
             let value = visitor.visit_map(CommaSeparated::new(b';', &mut self))?;
             self.bytes.consume(";");
             return Ok(value);
-        //}
+        // }
 
-        // return self.bytes.err(ErrorCode::ExpectedMap);
+        return self.bytes.err(ErrorCode::ExpectedMap);
     }
 
     fn deserialize_struct<V>(mut self, name: &'static str, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
@@ -484,7 +484,6 @@ impl<'de, 'a> de::MapAccess<'de> for CommaSeparated<'a, 'de> {
             return Ok(res);
         } else {
 
-            //check for whitespace aka nested cavetta construction
             // if nested_map {
                 let res = seed.deserialize(&mut TagDeserializer::new(&mut *self.de))?;
                 return Ok(res);  
