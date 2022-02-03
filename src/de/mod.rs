@@ -12,7 +12,7 @@ mod tests;
 pub use crate::error::{ Error, ErrorCode, Position, Result };
 use serde::de::{ self, DeserializeSeed, Deserializer as SerdeError, Visitor };
 use crate::parse::{ AnyNum, Bytes, ParsedStr };
-use std::{borrow::Cow, io, str};
+use std::{ borrow::Cow, io, str};
 
 pub fn from_reader<R, T>(mut rdr: R) -> Result<T> where R: io::Read, T: de::DeserializeOwned {
     let mut bytes = Vec::new();
@@ -77,12 +77,11 @@ impl<'de> Deserializer<'de> {
     pub fn end(&mut self) -> Result<()> {
         self.bytes.skip_ws()?;
 
-        // if self.bytes.bytes().is_empty() {
-        //     Ok(())
-        // } else {
-        //     self.bytes.err(ErrorCode::TrailingCharacters)
-        // }
-        Ok(())
+        if self.bytes.bytes().is_empty() {
+            Ok(())
+        } else {
+            self.bytes.err(ErrorCode::TrailingCharacters)
+        }
     }
 
     fn handle_other_structs<V>(&mut self, visitor: V) -> Result<V::Value>
@@ -423,6 +422,11 @@ impl<'a, 'de> CommaSeparated<'a, 'de> {
 
     fn has_element(&mut self) -> Result<bool> {
         self.de.bytes.skip_ws()?;
+
+        //nested cavetta constructions can only have 1 element
+        // if self.terminator==b';' {
+        //     return Ok(true);
+        // }
 
         match (self.had_comma, self.de.bytes.peek_or_eof()? != self.terminator) {
             // Trailing comma, maybe has a next element
