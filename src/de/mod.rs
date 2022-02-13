@@ -367,6 +367,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         self.bytes.skip_ws()?;
 
         if self.bytes.consume("{") {
+            //to prevent duplicated error i need to reimplement whatever the below method is
             let value = visitor.visit_map(CommaSeparated::new(b'}', &mut self))?;
             self.bytes.comma()?;
 

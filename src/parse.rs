@@ -307,9 +307,19 @@ impl<'a> Bytes<'a> {
     }
 
     pub fn char(&mut self) -> Result<char> {
-        if !self.consume("'") {
-            return self.err(ErrorCode::ExpectedChar);
-        }
+        if self.consume("'") {
+            return self.escaped_char()
+        } else {
+            //non escaped char (kinda like string)
+
+            todo!()
+        }  
+    }
+
+    pub fn escaped_char(&mut self) -> Result<char> {
+        // if !self.consume("'") {
+        //     return self.err(ErrorCode::ExpectedChar);
+        // }
 
         let c = self.peek_or_eof()?;
 
@@ -596,7 +606,7 @@ impl<'a> Bytes<'a> {
         if self.consume("\"") {
             return self.escaped_string();
         } else {
-            let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b)).count();
+            let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b) && !is_whitespace_char(b)).count();
             let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
             if !s.is_empty() {
                 self.consume(s);

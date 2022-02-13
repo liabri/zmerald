@@ -34,6 +34,11 @@ struct MyStruct4 {
     z: f32
 }
 
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+struct MyStruct5 {
+    x: Vec<u32>
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
 enum MyEnum {
     A,
@@ -68,8 +73,6 @@ fn test_struct() {
     
     assert_eq!(Ok(my_struct), from_str("MyStruct{x:4,y:7,}"));
     assert_eq!(Ok(my_struct), from_str("{x:4,y:7}"));
-
-    // using cavetta construct
     assert_eq!(Ok(my_struct),
         from_str("MyStruct{ 
             <x> 4,
@@ -77,21 +80,33 @@ fn test_struct() {
         }")
     );
 
-    let mut my_struct3 = MyStruct3 { x: HashMap::new() };
-    my_struct3.x.insert(4, 4);
+    // let mut my_struct3 = MyStruct3 { x: HashMap::new() };
+    // my_struct3.x.insert(4, 4);
     // my_struct3.x.insert(5, 5);
 
-    // using nested cavetta construct
-    assert_eq!(Ok(my_struct3),
-        from_str("MyStruct3{ 
-            x <4> 4;
-            # x <5> 5
+    // // using nested cavetta construct
+    // assert_eq!(Ok(my_struct3),
+    //     from_str("MyStruct3{ 
+    //         x <4> 4;
+    //         x <5> 5;
+    //     }")
+    // );
+
+
+    let mut my_struct5 = MyStruct5 { x: Vec::new() };
+    my_struct5.x.push(4);
+    my_struct5.x.push(5);
+
+    assert_eq!(Ok(my_struct5),
+        from_str("MyStruct5{ 
+            x: [4],
+            x: [5]
         }")
     );
 
 
     let my_struct4 = MyStruct4 { x: Some(String::from("zme")), y: String::from("rald"), z: 1.0 };
-    assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:zme,y:rald,z:1.0}"));
+    assert_eq!(Ok(my_struct4), from_str("MyStruct4{x:zme,y: rald,z:1.0}"));
 
 
     #[derive(Debug, PartialEq, Deserialize)]
@@ -140,6 +155,7 @@ fn test_array() {
     assert_eq!(Ok([2, 3, 4i32].to_vec()), from_str("[2,3,4,]"));
 
     assert_eq!(Ok([String::from("zme"), String::from("rald")].to_vec()), from_str("[\"zme\",rald]"));
+    assert_eq!(Ok([String::from("a"), String::from("b"), String::from("he lo")].to_vec()), from_str("[a,   b,      \"he lo\"]"));
 }
 
 #[test]
@@ -174,7 +190,7 @@ fn test_map() {
     map_holder.insert("first", map2);
     assert_eq!(Ok(map_holder),
         from_str("{
-            \"first\" <4> 5;
+            first <4> 5;
         }")
     );
 
