@@ -310,9 +310,10 @@ impl<'a> Bytes<'a> {
         if self.consume("'") {
             return self.escaped_char()
         } else {
-            //non escaped char (kinda like string)
-
-            todo!()
+            let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b) && !is_whitespace_char(b)).count();
+            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+            self.consume(s);
+            return Ok(s.chars().next().unwrap());
         }  
     }
 
@@ -325,7 +326,6 @@ impl<'a> Bytes<'a> {
 
         let c = if c == b'\\' {
             let _ = self.advance(1);
-
             self.parse_escape()?
         } else {
             // Check where the end of the char (') is and try to

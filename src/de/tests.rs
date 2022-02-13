@@ -231,6 +231,8 @@ fn test_string() {
 #[test]
 fn test_char() {
     assert_eq!(Ok('c'), from_str("'c'"));
+    assert_eq!(Ok('c'), from_str("c"));
+    assert_eq!(Ok('存'), from_str("存"));
 }
 
 #[test]
