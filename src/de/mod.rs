@@ -51,8 +51,69 @@ where S: de::DeserializeSeed<'a, Value = T> {
     Ok(value)
 }
 
+
+
+
+
+
+use crate::value::Value;
+use std::collections::HashMap;
+use std::path::PathBuf;
+pub struct Variables (pub HashMap<String, Value>);
+
+
+use std::io::{ Read, BufReader };
+use std::fs::File;
+
+
+
+
+
 pub struct Deserializer<'de> {
     bytes: Bytes<'de>,
+}
+
+impl<'de> Deserializer<'de> {
+    pub fn conjure(mut self) -> Result<Self> {
+        let len = self.bytes.bytes().iter().take_while(|&&b| b!='{' as u8).count();
+        for b in 0..len {
+            self.deserialize_include();
+            self.deserialize_variables();
+        }
+
+        Ok(self)
+    }
+
+    pub fn deserialize_include(&mut self) -> Result<()> {
+        if let Some(path) = self.bytes.include() {
+            //remove closing bracket from current bytes
+
+
+            // append new bytes to bottom of original file 
+            let file = File::open(path)?;
+            let mut reader = BufReader::new(file);
+            let mut bytes_rdr = Vec::new();
+            reader.read_to_end(&mut bytes_rdr)?;
+
+            let mut bytes = Bytes::new(&bytes_rdr)?;
+            loop {
+                if bytes.consume("{") {
+                    break;
+                }
+
+                bytes.advance_single();
+            }
+
+            // lifetime issue here
+            // self.bytes.append(bytes.bytes());
+        }
+
+        Ok(())
+    } 
+
+    pub fn deserialize_variables(&mut self) -> Result<()> {
+        Ok(())
+    } 
 }
 
 impl<'de> Deserializer<'de> {
@@ -63,7 +124,7 @@ impl<'de> Deserializer<'de> {
     pub fn from_bytes(input: &'de [u8]) -> Result<Self> {
         let deserializer = Deserializer {
             bytes: Bytes::new(input)?,
-        };
+        }.conjure()?;
 
         Ok(deserializer)
     }

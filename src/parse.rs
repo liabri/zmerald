@@ -125,6 +125,10 @@ impl<'a> Bytes<'a> {
         Ok(b)
     }
 
+    pub fn append(&mut self, bytes: &'a [u8]) {
+        [self.bytes, bytes].concat();
+    }
+
     pub fn advance(&mut self, bytes: usize) -> Result<()> {
         for _ in 0..bytes {
             self.advance_single()?;
@@ -531,6 +535,22 @@ impl<'a> Bytes<'a> {
         Ok(ident)
     }
 
+    pub fn include(&mut self) -> Option<String> {
+        if self.consume("include") {
+            self.skip_ws();
+            self.consume("<");
+
+            let i = self.bytes.iter().take_while(|&&b | b!='>' as u8).count();
+            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into())).ok()?;
+            if !s.is_empty() {
+                self.consume(s);
+                return Some(String::from(s));
+            }
+        }
+
+        None
+    } 
+
     pub fn next_bytes_contained_in(&self, allowed: fn(u8) -> bool) -> usize {
         self.bytes.iter().take_while(|&&b| allowed(b)).count()
     }
@@ -601,8 +621,6 @@ impl<'a> Bytes<'a> {
     pub fn string(&mut self) -> Result<ParsedStr<'a>> {
         if self.consume("\"") {
             return self.escaped_string();
-        } else if self.consume("include") {
-            return self.include();
         } else {
             let i = self.bytes.iter().take_while(|&&b | !is_reserved_char(b) && !is_whitespace_char(b)).count();
             let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
@@ -613,14 +631,6 @@ impl<'a> Bytes<'a> {
         }
 
         self.err(ErrorCode::ExpectedString)
-    }
-
-    pub fn include(&mut self) -> Result<ParsedStr<'a>> {
-        if self.consume("include") {
-            println!("INCLUDE!!!!");
-        }
-
-        todo!()
     }
 
     fn escaped_string(&mut self) -> Result<ParsedStr<'a>> {

@@ -295,11 +295,6 @@ impl<'a, W: io::Write> ser::Serializer for &'a mut Serializer<W> {
         self.serialize_sint(v)
     }
 
-    #[cfg(feature = "integer128")]
-    fn serialize_i128(self, v: i128) -> Result<()> {
-        self.serialize_sint(v)
-    }
-
     fn serialize_u8(self, v: u8) -> Result<()> {
         self.serialize_uint(v)
     }
@@ -313,11 +308,6 @@ impl<'a, W: io::Write> ser::Serializer for &'a mut Serializer<W> {
     }
 
     fn serialize_u64(self, v: u64) -> Result<()> {
-        self.serialize_uint(v)
-    }
-
-    #[cfg(feature = "integer128")]
-    fn serialize_u128(self, v: u128) -> Result<()> {
         self.serialize_uint(v)
     }
 

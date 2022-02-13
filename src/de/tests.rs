@@ -158,12 +158,11 @@ fn test_array() {
     assert_eq!(Ok([String::from("a"), String::from("b"), String::from("he lo")].to_vec()), from_str("[a,   b,      \"he lo\"]"));
 }
 
-#[test] 
-fn test_include() {
-    use std::path::PathBuf;
-
-    assert_eq!(Ok(PathBuf::from("poop")), from_str("include <>"));
-}
+// #[test] 
+// fn test_include() {
+//     use std::path::PathBuf;
+//     assert_eq!(Ok(PathBuf::from("poop")), from_str("include <>"));
+// }
 
 #[test]
 fn test_map() {
