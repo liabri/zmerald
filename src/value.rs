@@ -2,6 +2,7 @@ use serde::{
     de::{ DeserializeOwned, DeserializeSeed, Deserializer, Error as SerdeError, MapAccess, SeqAccess, Visitor },
     forward_to_deserialize_any, Deserialize, Serialize,
 };
+
 use std::{
     cmp::{ Eq, Ordering },
     hash::{ Hash, Hasher },
@@ -272,6 +273,7 @@ impl<'de> Deserializer<'de> for Value {
             Value::Bool(b) => visitor.visit_bool(b),
             Value::Char(c) => visitor.visit_char(c),
             Value::Map(m) => visitor.visit_map(MapAccessor {
+                //maybe check if nested here ?
                 keys: m.keys().cloned().rev().collect(),
                 values: m.values().cloned().rev().collect(),
             }),
