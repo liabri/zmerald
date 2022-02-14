@@ -13,6 +13,10 @@ pub use crate::error::{ Error, ErrorCode, Position, Result };
 use serde::de::{ self, DeserializeSeed, Deserializer as SerdeError, Visitor };
 use crate::parse::{ AnyNum, Bytes, ParsedStr };
 use std::{ borrow::Cow, io, str};
+use crate::value::Value;
+use std::collections::HashMap;
+use std::io::{ Read, BufReader };
+use std::fs::File;
 
 pub fn from_reader<R, T>(mut rdr: R) -> Result<T> where R: io::Read, T: de::DeserializeOwned {
     let mut bytes = Vec::new();
@@ -51,24 +55,6 @@ where S: de::DeserializeSeed<'a, Value = T> {
     Ok(value)
 }
 
-
-
-
-
-
-use crate::value::Value;
-use std::collections::HashMap;
-use std::path::PathBuf;
-pub struct Variables (pub HashMap<String, Value>);
-
-
-use std::io::{ Read, BufReader };
-use std::fs::File;
-
-
-
-
-
 pub struct Deserializer<'de> {
     bytes: Bytes<'de>,
 }
@@ -87,7 +73,9 @@ impl<'de> Deserializer<'de> {
     pub fn deserialize_include(&mut self) -> Result<()> {
         if let Some(path) = self.bytes.include()? {
             //remove closing bracket from current bytes
-
+            let i = self.bytes.bytes().iter().rev().take_while(|&&b | b!='}' as u8).count();
+            let new_len = self.bytes.bytes().len()-i;
+            self.bytes.set_len(new_len);
 
             // append new bytes to bottom of original file 
             let file = File::open(path)?;
@@ -112,6 +100,8 @@ impl<'de> Deserializer<'de> {
     } 
 
     pub fn deserialize_variables(&mut self) -> Result<()> {
+        let variables: HashMap<String, Value> = HashMap::new();
+
         Ok(())
     } 
 }

@@ -595,6 +595,10 @@ impl<'a> Bytes<'a> {
         self.bytes.get(0).cloned()
     }
 
+    // pub fn peek_from_end(&self) -> Option<u8> {
+    //     self.bytes.get(self.bytes.len()).cloned()
+    // }
+
     pub fn peek_or_eof(&self) -> Result<u8> {
         self.bytes
             .get(0)
@@ -792,6 +796,10 @@ impl<'a> Bytes<'a> {
         };
 
         Ok(c)
+    }
+
+    pub fn set_len(&mut self, len: usize) {
+        self.bytes = &self.bytes[0..len];
     }
 
     fn skip_comment(&mut self) -> Result<bool> {
