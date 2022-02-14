@@ -535,20 +535,20 @@ impl<'a> Bytes<'a> {
         Ok(ident)
     }
 
-    pub fn include(&mut self) -> Option<String> {
+    pub fn include(&mut self) -> Result<Option<String>> {
         if self.consume("include") {
-            self.skip_ws();
+            self.skip_ws()?;
             self.consume("<");
 
             let i = self.bytes.iter().take_while(|&&b | b!='>' as u8).count();
-            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into())).ok()?;
+            let s = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
             if !s.is_empty() {
                 self.consume(s);
-                return Some(String::from(s));
+                return Ok(Some(String::from(s)));
             }
         }
 
-        None
+        Ok(None)
     } 
 
     pub fn next_bytes_contained_in(&self, allowed: fn(u8) -> bool) -> usize {

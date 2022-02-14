@@ -85,7 +85,7 @@ impl<'de> Deserializer<'de> {
     }
 
     pub fn deserialize_include(&mut self) -> Result<()> {
-        if let Some(path) = self.bytes.include() {
+        if let Some(path) = self.bytes.include()? {
             //remove closing bracket from current bytes
 
 
