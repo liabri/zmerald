@@ -11,6 +11,6 @@ Thought emerald sounded cool, but it sounds even cooler in Maltese.
 - include keyword;
 - variables;
 - allow comment on last line of file;
-- rather then throwing an error on duplicate fields, add to sequence (if sequence) or override;
+- rather than throwing an error on duplicate fields, add to sequence (if sequence) or override;
 - remove need of semicolon `;` in constructions such as variables and cavetta;
 - remove need of specifying field names in structs and base it on order of "arguments" (values)
