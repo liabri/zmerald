@@ -2,7 +2,7 @@
 An opinionated configuration language ridden with flaws.
 
 ## motivation
-As I started to work on some of my other projects such as [benten](https://github.com/liabri/benten) and [tema](https://github.com/liabri/tema) I used yaml for configuration and such, but it did not provide the flexibility I was looking for. I would like to eventually work on my own wayland compositor too and thought a good configuration language is essential. This all led to the birth of zmerald, a configuration language which allows various constructions to keep the config readable and easily maintainable. Everything may be found in the grammar.md.
+As I started to work on some of my other projects such as [benten](https://github.com/liabri/benten) and [tema](https://github.com/liabri/tema) I used yaml for configuration and such, but it did not provide the flexibility I was looking for. I would like to eventually work on my own wayland compositor too and thought a good configuration language is essential. This all led to the birth of zmerald, a configuration language which allows various constructions to keep the config readable and easily maintainable. Details in the grammar.md.
 
 ## why the name `zmerald` ?
 Thought emerald sounded cool, but it sounds even cooler in Maltese.
