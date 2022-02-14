@@ -100,7 +100,9 @@ impl<'de> Deserializer<'de> {
     } 
 
     pub fn deserialize_variables(&mut self) -> Result<()> {
-        let variables: HashMap<String, Value> = HashMap::new();
+        if let Some((name, var)) = self.bytes.dollar()? {
+            
+        }
 
         Ok(())
     } 

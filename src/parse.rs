@@ -454,6 +454,28 @@ impl<'a> Bytes<'a> {
     //         .fold(Ok(true), |acc, x| acc.and_then(|val| x.map(|x| x && val)))
     // }
 
+    pub fn dollar(&mut self) -> Result<Option<(String, String)>> {
+        if self.consume("$") {
+            self.skip_ws()?;
+
+            let i = self.bytes.iter().take_while(|&&b | b!='=' as u8).count();
+            let name = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+            if !name.is_empty() {
+                self.consume(name);
+            }
+
+            let i = self.bytes.iter().take_while(|&&b | b!=';' as u8).count();
+            let value = from_utf8(&self.bytes[..i]).map_err(|e| self.error(e.into()))?;
+            if !value.is_empty() {
+                self.consume(value);
+            }
+
+            return Ok(Some((String::from(name), String::from(value))));
+        }
+
+        Ok(None)
+    }
+
     pub fn eat_byte(&mut self) -> Result<u8> {
         let peek = self.peek_or_eof()?;
         let _ = self.advance_single();
