@@ -101,7 +101,7 @@ impl<'de> Deserializer<'de> {
 
     pub fn deserialize_variables(&mut self) -> Result<()> {
         if let Some((name, var)) = self.bytes.dollar()? {
-            
+            //replace all instances of name with var
         }
 
         Ok(())
